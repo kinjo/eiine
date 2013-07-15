@@ -1,43 +1,44 @@
 //size width, height, color, format, wrap_s, wrap_t, wrap, filter, image, mipmap
 function TextureObject(options){
+  this.texture = GL.createTexture();
+  if(options.image && options.image.complete==false){
+    var self=this;
+    options.image.onload=function(){self.load(options);}
+  }else{
+    this.load(options);
+  }
+}
+TextureObject.prototype.load=function(options){
   var width = options.size || options.width || (options.image && options.image.width);
   var height = options.size || options.height || (options.image && options.image.height);
   var color = options.color || GL.RGBA;
   var format = options.format || GL.UNSIGNED_BYTE;
-  var wrap_s = options.wrap_s || options.wrap || GL.REPEAT;
-  var wrap_t = options.wrap_t || options.wrap || GL.REPEAT;
+  var wrap_s = options.wrap_s || options.wrap || (options.clamp && GL.CLAMP_TO_EDGE) || GL.REPEAT;
+  var wrap_t = options.wrap_t || options.wrap || (options.clamp && GL.CLAMP_TO_EDGE) || GL.REPEAT;
   var mag_filter = options.filter || options.mag_filter;
   var min_filter = options.filter || options.min_filter;
-  var texture = GL.createTexture();
+  var texture = this.texture;
   var image = options.image || null;
   GL.bindTexture(GL.TEXTURE_2D, texture);
   GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, wrap_s);
   GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, wrap_t);
   if(options.mipmap){
     mag_filter = mag_filter || GL.LINEAR;
-    min_filter = min_filter || GL.LINEAR_MIPMAP_NEAREST;
+    min_filter = min_filter || GL.LINEAR_MIPMAP_LINEAR;
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, mag_filter || GL.LINEAR);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, min_filter || GL.LINEAR_MIPMAP_NEAREST);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, min_filter || GL.LINEAR_MIPMAP_LINEAR);
     GL.generateMipmap(GL.TEXTURE_2D);
   }else{
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, mag_filter || GL.LINEAR);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, min_filter || GL.LINEAR);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, mag_filter || (options.nearest && GL.NEAREST) || GL.LINEAR);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, min_filter || (options.nearest && GL.NEAREST) || GL.LINEAR);
   }
   if(image){
-    if(image.complete == false){
-      image.onload=function(){
-        GL.texImage2D(GL.TEXTURE_2D, 0, color, color, GL.UNSIGNED_BYTE, image);
-        if(options.mipmap)GL.generateMipmap(GL.TEXTURE_2D);
-      }
-    }else{
-      GL.texImage2D(GL.TEXTURE_2D, 0, color, color, GL.UNSIGNED_BYTE, image);
-      if(options.mipmap)GL.generateMipmap(GL.TEXTURE_2D);
-    }
+    GL.texImage2D(GL.TEXTURE_2D, 0, color, color, GL.UNSIGNED_BYTE, image);
+    if(options.mipmap)GL.generateMipmap(GL.TEXTURE_2D);
   }else{
     GL.texImage2D(GL.TEXTURE_2D, 0, color, width, height, 0, color, format, null);
   }
   GL.bindTexture(GL.TEXTURE_2D, null);
-  this.texture = texture;
   this.width = width;
   this.height = height;
 }
