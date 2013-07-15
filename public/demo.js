@@ -42,6 +42,9 @@ function start(effectClass){
   //$('body').click(iinef).keydown(iinef);
 
   setInterval(function(){
+    ws.send('message');
+  },500);
+  setInterval(function(){
     if(flag&&(new Date()-1000/10>t)){
       // reander the iine
       for (var i=0;i<iinen;i++) {
