@@ -26,25 +26,25 @@ get '/' do
           count = cache.get('count', false)
           update = cache.get('update', false)
           if count.to_i > 0
-            puts "count:#{count} update:#{update}"
+            warn "count:#{count} update:#{update}"
           end
         rescue Memcached::NotFound => e
           count = 0
           update = ''
         rescue => e
-          puts e
+          warn e
         end
         if count.to_i > 0
           EM.next_tick { settings.sockets.each{|s| s.send("{count:#{count},update:\"#{update}\"}")} }
           begin
             cache.set 'count', '0', 0, false
           rescue Memcached::ServerIsMarkedDead => e
-            puts e
+            warn e
           end
         end
       end
       ws.onclose do
-        warn("wetbsocket closed")
+        warn "wetbsocket closed"
         settings.sockets.delete(ws)
       end
     end

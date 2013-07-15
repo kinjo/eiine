@@ -18,7 +18,6 @@ function start(effectClass){
   var ws = new WebSocket('ws://' + $('#hostname').val());
   var ws_open=false;
   ws.onopen = function () {
-    ws.send('message');
     ws_open=true;
   };
   ws.onmessage = function (e) {
@@ -29,20 +28,12 @@ function start(effectClass){
       iinen+=json.count;
     }
   };
-  // FIXME: There is no immediacy in 4500 seconds.
-  // When clients increase, immediacy is improved,
-  // but, the load increases.
-  setInterval(function(){
-    if(ws_open){
-      ws.send('message');
-    }
-  }, 500); // 4500
   var iinef = function(){
-    //effect.render(renderTarget,1);
     $.ajax({
       type:'POST',
       url:'/'
     });
+    ws.send('message');
   };
   $('body').click(iinef).keydown(iinef);
 
