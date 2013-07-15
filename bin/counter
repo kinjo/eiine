@@ -37,6 +37,26 @@ Daemons.run_proc(File.basename(__FILE__)) do
     end
   
     latest = latests.dup.sort({cache_key:-1}).limit(1).to_a.first
+
+    latests.dup.inject({}) { |h, e|
+      # Count iine per session_id
+      h[e['session_id']] = (h[e['session_id']] || 0) + 1
+      h
+    }.each do |k, v|
+      if v > config.ban_threshold
+        # If the number of iine is over 20 at a time, ban the session
+        coll = db.collection 'session_id'
+        session = coll.find({session_id:k}).first
+        session['banned']=true
+        coll.update({_id:session['_id']}, session)
+        puts "banned #{k}"
+        begin
+          cache.delete("session_#{k}")
+        rescue Memcached::NotFound => e
+          puts e
+        end
+      end
+    end
   
     newids = latests.collect {|e| e['_id'].to_s}.select {|e| !ids.include?(e)}
   

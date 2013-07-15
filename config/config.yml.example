@@ -6,4 +6,4 @@ mongo_host: localhost
 mongo_port: 27017
 mongo_db: fluent
 mongo_collection: myapp
-banning: true
+ban_threshold: 20

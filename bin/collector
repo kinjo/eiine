@@ -30,8 +30,20 @@ Daemons.run_proc(File.basename(__FILE__)) do
           (cache_key, bytes, expires_time) = key_data
           if !(/count/ =~ cache_key) and !(/update/ =~ cache_key) and !(/^session/ =~ cache_key)
             humanized_expires_time = Time.at(expires_time.to_i).to_s     
-            collection.insert({cache_key:cache_key})
             puts "[#{humanized_expires_time}]\t#{cache_key}"
+
+            # Get session id
+            session_id=nil
+            cache.cmd("String" => "get #{cache_key}", "Match" => /^END/) do |d|
+              d.scan(/.*?(\w+-\w+-\w+-\w+-\w+).*/) do |aaa|
+                session_id=aaa.first
+              end
+            end
+
+            # Save cache_key is a time of an iine to MongoDB
+            collection.insert({cache_key:cache_key, session_id:session_id})
+
+            # Delete a couple of cache_key and value from memcached
             cache.cmd("String" => "delete #{cache_key}", "Match" => /^DELETED/)
           end
         end

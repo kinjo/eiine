@@ -83,31 +83,10 @@ post '/' do
         cache.set "session_#{params[:session_id]}", session
       end
     end
-    if session and !session[:banned]
-      if settings.config.banning
-        now = Time.now.to_s
-        if session[:update] == now
-          # count requests per second
-          session[:counter] += 1
-          if session[:counter] > 20
-            # ban
-            session[:banned] = true
-            connect = Mongo::Connection.new settings.config.mongo_host, settings.config.mongo_port
-            db = connect.db settings.config.mongo_db
-            collection = db.collection 'session_id'
-            collection.update({_id:session[:_id]}, session)
-          end
-        else
-          session[:update] = now
-          session[:counter] = 0
-        end
-        # update session on memcached
-        cache.set "session_#{params[:session_id]}", session
-      end
-
+    if session and !session['banned']
       t = Time.now.instance_eval {'%s.%03d' % [strftime('%Y/%m/%d+%H:%M:%S'), (usec / 1000.0).round]}
       # FIXME: There is missed in usec accuracy
-      Memcached.new("#{settings.config.memcached_host}:#{settings.config.memcached_port}").set(t, 1)
+      Memcached.new("#{settings.config.memcached_host}:#{settings.config.memcached_port}").set(t, {update:t, session_id:params[:session_id]})
     end
   end
 end
