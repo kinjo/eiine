@@ -31,9 +31,12 @@ function start(effectClass){
   var iinef = function(){
     $.ajax({
       type:'POST',
-      url:'/'
+      url:'/',
+      data:{session_id:$('#session_id').val()},
+      success:function(){
+        ws.send('message');
+      }
     });
-    ws.send('message');
   };
   $('body').click(iinef).keydown(iinef);
 
