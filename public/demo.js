@@ -1,5 +1,6 @@
 var GL,FB;
 function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
+  var iine=0;
   var flag=false;
   var pre_update='';
   var iinen=0; // number of iine
@@ -10,6 +11,8 @@ function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
       flag=true;
       pre_update=json.update;
       iinen+=json.count;
+      iinen-=iine;
+      iine=0;
     }
     if(json.aftereffect){
       aftereffect.render(renderTarget,1);
@@ -23,6 +26,10 @@ function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
       data:{session_id:$('#session_id').val()},
       success:function(){
         ws.send('message');
+        iine++;
+        effect.render(renderTarget,1);
+      },
+      error:function(){
       }
     });
   }
@@ -63,7 +70,4 @@ function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
       aftereffect.render(renderTarget,0);
     }
   },10);
-  setInterval(function(){
-    ws.send('message');
-  },500);
 }

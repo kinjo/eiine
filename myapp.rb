@@ -100,6 +100,7 @@ post '/' do
       Memcached.new("#{settings.config.memcached_host}:#{settings.config.memcached_port}").set(t, {update:t, session_id:params[:session_id]})
     else
       warn "BANNED #{params[:session_id]}"
+      403
     end
   end
 end
