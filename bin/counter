@@ -1,0 +1,49 @@
+#!/usr/bin/env ruby
+
+require 'mongo'
+require 'memcached'
+require 'time'
+require 'yaml'
+require 'ostruct'
+require 'daemons'
+
+# Count iine in MongoDB and set to memcached.
+
+CONFIG_FILEPATH = File.join(File.dirname(__FILE__), '..', 'config', 'config.yml')
+config = OpenStruct.new(YAML.load_file(CONFIG_FILEPATH))
+
+Daemons.run_proc(File.basename(__FILE__)) do
+  update = Time.now.instance_eval {'%s.%03d' % [strftime('%Y/%m/%d+%H:%M:%S'), 0]}
+  
+  cache = Memcached.new("#{config.memcached_host}:#{config.memcached_port}")
+  cache.set 'count', '0', 0, false
+  cache.set 'update', update, 0, false
+  
+  connect = Mongo::Connection.new config.mongo_host, config.mongo_port
+  db = connect.db config.mongo_db
+  collection = db.collection config.mongo_collection
+  
+  ids = []
+  
+  while true do
+    latests = collection.find({cache_key:{"$gt" => update}})
+    if latests.count < 1
+      sleep 0.5
+      latests = collection.find({cache_key:{"$gt" => update}})
+      if latests.count < 1
+        ids.clear
+        next
+      end
+    end
+  
+    latest = latests.dup.sort({cache_key:-1}).limit(1).to_a.first
+  
+    newids = latests.collect {|e| e['_id'].to_s}.select {|e| !ids.include?(e)}
+  
+    cache.increment 'count', newids.count
+    cache.set 'update', update, 0, false
+  
+    ids += newids
+    update = latest['cache_key'].to_s
+  end
+end

@@ -1,0 +1,149 @@
+#!/bin/bash
+
+# Load to current shell:
+#
+#   . ./eiinerc
+#
+# Functions:
+#
+# * eiine-start
+#   start all eiine instances and all apps
+#
+# * eiine-stop
+#   stop all eiine instances and all apps
+#
+# * eiine-show-instances
+#   show all eiine instance ids
+#
+# * eiine-reload-instances-status
+#   run ec2-describe-instances and save the result to a temporary file
+#
+# * eiine-show-instances-status
+#   show status
+#
+# * eiine-start-instances
+#   start all eiine instances
+#
+# * eiine-stop-instances
+#   stop all eiine instances
+#
+# * eiine-wait-for-running
+# * eiine-wait-for-stopped
+# * eiine-wait-for
+# * eiine-show-instances-dns
+# * eiine-mongo-dns
+# * eiine-setup-config-yml
+# * eiine-start-app
+#
+# Environemnt variables:
+#
+# * EC2_DESCRIBE_INSTANCES_TMP
+#   path to a temporary file for ec2-describe-instances
+#
+# * EC2_KEY
+#   path to the key file for the EC2 instances
+
+export EC2_DESCRIBE_INSTANCES_TMP=/tmp/instances
+
+export EC2_KEY=$HOME/.aws-keys/first.pem
+
+function eiine-show-instances
+{
+    cat <<EOF | grep "$1\$" | awk '{print $1}'
+i-78baed7a app
+i-16aef914 mongo
+i-82de8980 app
+EOF
+}
+
+function eiine-show-instances-status
+{
+    cat $EC2_DESCRIBE_INSTANCES_TMP | grep '^INSTANCE' | cut -f2,6
+}
+
+function eiine-wait-for
+{
+    while [ "$(eiine-reload-instances-status && eiine-show-instances-status | grep -v $1 | wc -l)" != "0" ]; do
+        echo waiting...
+        sleep 5
+    done
+}
+
+function eiine-wait-for-running
+{
+    eiine-wait-for running
+}
+
+function eiine-wait-for-stopped
+{
+    eiine-wait-for stopped
+}
+
+function eiine-start-instances
+{
+    eiine-show-instances | xargs ec2-start-instances
+}
+
+function eiine-stop-instances
+{
+    eiine-show-instances | xargs ec2-stop-instances
+}
+
+function eiine-reload-instances-status
+{
+    ec2-describe-instances > $EC2_DESCRIBE_INSTANCES_TMP
+}
+
+function eiine-show-instances-dns
+{
+    cat $EC2_DESCRIBE_INSTANCES_TMP | grep '^INSTANCE' | grep "$1" |awk '{print $4}'
+}
+
+function eiine-mongo-dns
+{
+    for i in `instances mongo`; do eiine-show-instances-dns $i; done
+}
+
+function eiine-setup-config-yml
+{
+    cat <<EOF | ssh -i $EC2_KEY -o StrictHostKeyChecking=no ubuntu@$1 'ed ~/eiine/config/config.yml'
+/hostname
+c
+hostname: $dns
+.
+/mongo_host
+c
+mongo_host: $(eiine-mongo-dns)
+.
+w
+q
+EOF
+}
+
+function eiine-start-app
+{
+    cat <<EOF | ssh -i $EC2_KEY -o StrictHostKeyChecking=no ubuntu@$1 'bash -l'
+cd ~/eiine/bin && ./collector restart
+cd ~/eiine/bin && ./counter restart
+cd ~/eiine && bundle exec thin stop -d
+cd ~/eiine && bundle exec thin start -d
+EOF
+}
+
+function eiine-start
+{
+    eiine-start-instances
+    eiine-wait-for-running
+    for i in `eiine-show-instances app`; do
+        dns=$(eiine-show-instances-dns $i)
+        echo SETUP: $dns
+        eiine-setup-config-yml $dns
+        eiine-start-app $dns
+    done
+}
+
+function eiine-stop
+{
+    eiine-stop-instances
+    eiine-wait-for-stopped
+}

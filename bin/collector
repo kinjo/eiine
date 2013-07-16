@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+
+require 'mongo'
+require 'net/telnet'
+require 'yaml'
+require 'ostruct'
+require 'daemons'
+
+# Collect iine from memcached to MongoDB
+
+CONFIG_FILEPATH = File.join(File.dirname(__FILE__), '..', 'config', 'config.yml')
+config = OpenStruct.new(YAML.load_file(CONFIG_FILEPATH))
+
+Daemons.run_proc(File.basename(__FILE__)) do
+  cache = Net::Telnet::new("Host"=>config.memcached_host, "Port"=>config.memcached_port, "Timeout"=>3)
+
+  connect = Mongo::Connection.new config.mongo_host, config.mongo_port
+  db = connect.db config.mongo_db
+  collection = db.collection config.mongo_collection
+
+  while true
+    slab_ids = []
+    cache.cmd("String" => "stats items", "Match" => /^END/) do |c|
+      matches = c.scan(/STAT items:(\d+):/)
+      slab_ids = matches.flatten.uniq
+    end
+    slab_ids.each do |slab_id|
+      cache.cmd("String" => "stats cachedump #{slab_id} #{config.memcached_dump_limit}", "Match" => /^END/) do |c|
+        matches = c.scan(/^ITEM (.+?) \[(\d+) b; (\d+) s\]$/).each do |key_data|
+          (cache_key, bytes, expires_time) = key_data
+          if !(/count/ =~ cache_key) and !(/update/ =~ cache_key)
+            humanized_expires_time = Time.at(expires_time.to_i).to_s     
+            collection.insert({cache_key:cache_key})
+            puts "[#{humanized_expires_time}]\t#{cache_key}"
+            cache.cmd("String" => "delete #{cache_key}", "Match" => /^DELETED/)
+          end
+        end
+      end  
+    end
+  end
+  cache.close
+end

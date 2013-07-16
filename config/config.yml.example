@@ -1,0 +1,8 @@
+hostname: localhost
+memcached_host: localhost
+memcached_port: 11211
+memcached_dump_limit: 100
+mongo_host: localhost
+mongo_port: 27017
+mongo_db: fluent
+mongo_collection: myapp
