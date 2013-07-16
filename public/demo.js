@@ -27,6 +27,7 @@ function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
       success:function(){
         ws.send('message');
         iine++;
+        GL.clear(GL.COLOR_BUFFER_BIT);
         effect.render(renderTarget,1);
       },
       error:function(){
@@ -47,7 +48,7 @@ function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
     GL.framebuffer.setRenderTarget(renderTarget);
   }
   window.onresize();
-  GL.clearColor(0,1,0,1)
+  GL.clearColor(0,0,0,1)
   GL.clear(GL.COLOR_BUFFER_BIT);
   GL.disable(GL.DEPTH_TEST);
   GL.enable(GL.BLEND);
@@ -59,9 +60,7 @@ function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
     GL.clear(GL.COLOR_BUFFER_BIT);
     if(flag&&(new Date()-1000/10>t)){
       // reander the iine
-      for (var i=0;i<iinen;i++) {
-        effect.render(renderTarget,1);
-      }
+      effect.render(renderTarget,iinen);
       iinen=0; // clear number of iine
       flag=false;
       t=new Date();
