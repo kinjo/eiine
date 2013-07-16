@@ -5,16 +5,17 @@
     %script{src:"/webgl/lib/glutil.js"}
     %script{src:"/webgl/lib/shader.js"}
     %script{src:"/webgl/lib/text2img.js"}
+    %script{src:"/webgl/aftereffect/sugokuiine/sugoku.js", charset:"utf-8"}
     %script{src:"/demo.js"}
     - effect = ["blur", "lifegame"].shuffle.first
     - if effect == "blur"
       %script{src:"/webgl/effects/blur/blur.js", charset:"utf-8"}
       %script{type:"text/javascript"}
-        $(function () {start(BlurEffect, "/webgl/effects/blur/")});
+        $(function () {start(BlurEffect, "/webgl/effects/blur/", SugokuEffect, "/webgl/aftereffect/sugokuiine/")});
     - if effect == "lifegame"
       %script{src:"/webgl/effects/lifegame/lifegame.js", charset:"utf-8"}
       %script{type:"text/javascript"}
-        $(function () {start(LifeGame, "/webgl/effects/lifegame/")});
+        $(function () {start(LifeGame, "/webgl/effects/lifegame/", SugokuEffect, "/webgl/aftereffect/sugokuiine/")});
   %body
     %input{type:"hidden", id:"hostname", value:@hostname}
     %input{type:"hidden", id:"session_id", value:@session_id}

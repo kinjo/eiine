@@ -1,5 +1,5 @@
 var GL,FB;
-function start(effectClass,baseURL){
+function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
   var flag=false;
   var pre_update='';
   var iinen=0; // number of iine
@@ -12,6 +12,7 @@ function start(effectClass,baseURL){
       iinen+=json.count;
     }
     if(json.aftereffect){
+      aftereffect.render(renderTarget,1);
       console.log('aftereffect received');
     }
   };
@@ -44,6 +45,7 @@ function start(effectClass,baseURL){
   GL.disable(GL.DEPTH_TEST);
   GL.enable(GL.BLEND);
   var effect = new effectClass(baseURL);
+  var aftereffect = new aftereffectClass(aftereffectBaseURL);
   effect.render(renderTarget,1);
   var t=new Date();
   setInterval(function(){
@@ -56,7 +58,10 @@ function start(effectClass,baseURL){
       iinen=0; // clear number of iine
       flag=false;
       t=new Date();
-    }else effect.render(renderTarget,0);
+    }else {
+      effect.render(renderTarget,0);
+      aftereffect.render(renderTarget,0);
+    }
   },10);
   setInterval(function(){
     ws.send('message');
