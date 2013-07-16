@@ -75,5 +75,9 @@ function start(){
     }
     effect3.render(renderTarget);
     effect4.render(renderTarget);
-  },10)
+  },10);
+  // message polling. message is not sent when browser is quiet
+  setInterval(function(){
+    ws.send('message');
+  },500);
 }
