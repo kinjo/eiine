@@ -11,6 +11,9 @@ function start(effectClass,baseURL){
       pre_update=json.update;
       iinen+=json.count;
     }
+    if(json.aftereffect){
+      console.log('aftereffect received');
+    }
   };
   document.body.onclick=function(){
     $.ajax({

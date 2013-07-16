@@ -12,6 +12,7 @@ CONFIG_FILEPATH = File.join(File.dirname(__FILE__), 'config', 'config.yml')
 set :server, 'thin'
 set :sockets, []
 set :config, OpenStruct.new(YAML.load_file(CONFIG_FILEPATH))
+set :acc, 0 # count iine until threshold reached
 
 get '/' do
   if !request.websocket?
@@ -47,7 +48,14 @@ get '/' do
         end
         #warn "{count:#{count},update:\"#{update}\"}"
         if count.to_i > 0
-          EM.next_tick { settings.sockets.each{|s| s.send("{count:#{count},update:\"#{update}\"}")} }
+          settings.acc += count.to_i
+          if settings.acc > settings.config.effect_threshold
+            # if threshold reached, set aftereffect to true
+            EM.next_tick { settings.sockets.each{|s| s.send("{count:#{count},aftereffect:true,update:\"#{update}\"}")} }
+            settings.acc = 0
+          else
+            EM.next_tick { settings.sockets.each{|s| s.send("{count:#{count},aftereffect:false,update:\"#{update}\"}")} }
+          end
           begin
             cache.set 'count', '0', 0, false
           rescue Memcached::ServerIsMarkedDead => e
