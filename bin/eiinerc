@@ -54,6 +54,8 @@ i-78baed7a app
 i-16aef914 mongo
 i-82de8980 app
 EOF
+# i-02f01306 app
+# i-88f0138c app
 }
 
 function eiine-show-instances-status
@@ -77,7 +79,7 @@ function eiine-wait-for-ssh-all
 
 function _eiine-wait-for
 {
-    while [ "$(eiine-reload-instances-status && eiine-show-instances-status | grep -v $1 | wc -l)" != "0" ]; do
+    while [ "$(eiine-reload-instances-status && join -1 1 -2 1 <(eiine-show-instances-status) <(eiine-show-instances) | grep -v $1 | wc -l)" != "0" ]; do
         echo waiting...
         sleep 5
     done
@@ -132,6 +134,10 @@ hostname: $dns
 c
 mongo_host: $(eiine-mongo-dns)
 .
+/effect_threshold
+c
+effect_threshold: 300
+.
 w
 q
 EOF
@@ -152,7 +158,16 @@ function eiine-start-app
 cd ~/eiine
 (cd ./bin && ./collector restart)
 (cd ./bin && ./counter restart)
-bundle exec thin stop -d
+bundle exec thin stop -f
+bundle exec thin start -d
+EOF
+}
+
+function eiine-start-web
+{
+    cat <<EOF | ssh -i $EC2_KEY -o StrictHostKeyChecking=no ubuntu@$1 'bash -l'
+cd ~/eiine
+bundle exec thin stop -f
 bundle exec thin start -d
 EOF
 }
@@ -168,6 +183,16 @@ function eiine-start-apps
         eiine-start-app $dns
     done
     eiine-start-elb
+}
+
+function eiine-reload-apps
+{
+    for i in `eiine-show-instances app`; do
+        dns=$(eiine-show-instances-dns $i)
+        echo RELOAD: $dns
+        eiine-setup-config-yml $dns
+        eiine-start-web $dns
+    done
 }
 
 function eiine-start-all
@@ -200,6 +225,6 @@ function eiine-stop-all
 function eiine-start-elb
 {
     elb-deregister-instances-from-lb eiine --instances $(elb-describe-instance-health eiine | awk '{print $2}')
-    elb-register-instances-with-lb eiine --instances $(eiine-instances app)
+    elb-register-instances-with-lb eiine --instances $(eiine-show-instances app)
     elb-describe-lbs eiine
 }
