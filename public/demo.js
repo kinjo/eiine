@@ -5,6 +5,7 @@ function start(){
   var pre_update='';
   var iinen=0; // number of iine
   var ws = new WebSocket('ws://' + $('#hostname').val());
+  var n=0;
   //document.body.onclick=function(){flag=true;}
   //document.body.onkeydown=function(){flag=true;}
   ws.onmessage = function (e) {
@@ -12,9 +13,10 @@ function start(){
     if(pre_update != json.update){
       flag=true;
       pre_update=json.update;
-      iinen+=json.count;
+      iinen=json.count;
       iinen-=iine;
       iine=0;
+      n=iinen;
     }
     if(json.aftereffect){
       //aftereffect.render(renderTarget,1);
@@ -30,8 +32,7 @@ function start(){
         ws.send('message');
         iine++;
         flag=true;
-        //GL.clear(GL.COLOR_BUFFER_BIT);
-        //effect.render(renderTarget,1);
+        n=1;
       },
       error:function(){
       }
@@ -64,9 +65,15 @@ function start(){
   setInterval(function(){
     GL.clear(GL.COLOR_BUFFER_BIT);
     GL.blendFunc(GL.ONE,GL.ZERO);
-    if(flag&&(new Date()-1000/10>t)){
-      effect1.render(renderTarget,1);
-      effect2.render(renderTarget,1);
+    if(flag&&n>0&&(new Date()-1000/10>t)){
+      var q=Math.floor(Math.random()*2);
+      if(q==0){
+        effect1.render(renderTarget,n);
+        effect2.render(renderTarget,0);
+      }else{
+        effect1.render(renderTarget,0);
+        effect2.render(renderTarget,n);
+      }
       flag=false;
       t=new Date();
     }else{
