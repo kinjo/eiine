@@ -1,15 +1,17 @@
-var BlurEffect = function(){
+var BlurEffect = function(url){
+  if(!url)url = ""
+  this.baseURL = url;
   this.size = 512;
-  this.calcShader    = new ShaderObject({vert: '/blur/vertex.vert', frag: '/blur/calc.frag'});
-  this.renderShader  = new ShaderObject({vert: '/blur/vertex.vert', frag: '/blur/render.frag'});
-  this.messageShader = new ShaderObject({vert: '/blur/image.vert',  frag: '/blur/image.frag'});
+  this.calcShader    = new ShaderObject({vert: url+'vertex.vert', frag: url+'calc.frag'});
+  this.renderShader  = new ShaderObject({vert: url+'vertex.vert', frag: url+'render.frag'});
+  this.messageShader = new ShaderObject({vert: url+'image.vert',  frag: url+'image.frag'});
   this.textures = [
     new TextureObject({image: createCharImage('は', 128), clamp: true, mipmap: true}),
     new TextureObject({image: createCharImage('ご', 128), clamp: true, mipmap: true}),
     new TextureObject({image: createCharImage('ー', 128), clamp: true, mipmap: true})
   ];
   var img=new Image();
-  img.src="/blur/wave.png";
+  img.src = url+"wave.png";
   this.waveTexture = new TextureObject({image: img});
 
   this.oldTarget = this.createRenderTarget();
@@ -17,11 +19,12 @@ var BlurEffect = function(){
   var quadVertex = new ArrayBufferObject(2, [-1, -1, 1, -1, 1, 1, -1, 1]);
   this.quad      = new Geometry(GL.TRIANGLE_FAN, 4, { vertex: quadVertex });
   this.a         = 0;
+
 }
 
 BlurEffect.prototype.createRenderTarget = function() {
   var texture = new TextureObject({size: this.size, filter: GL.LINEAR});
-  return new RenderTarget({texture: texture})
+  return new RenderTarget({texture: texture});
 }
 
 BlurEffect.prototype.flipRenderTarget = function() {
@@ -32,7 +35,6 @@ BlurEffect.prototype.flipRenderTarget = function() {
 
 BlurEffect.prototype.render = function(outputTarget,count){
   GL.framebuffer.setRenderTarget(this.newTarget);
-  GL.enable(GL.BLEND);
   GL.blendFunc(GL.ONE,GL.ZERO);
   this.calcShader.use({
     velocity:[0,-0.001],
@@ -43,6 +45,7 @@ BlurEffect.prototype.render = function(outputTarget,count){
   GL.blendFunc(GL.SRC_ALPHA,GL.ONE);
   this.a++;
   var size=0.2;
+
   for(var i=0;i<3;i++){
     this.messageShader.use({
       rect:    [0.1*Math.sin((0.0137-0.002*i)*this.a)+(i-1)/2-size/2, -0.5+0.1*Math.sin((0.0073+0.002*i)*this.a), size, size],
@@ -51,7 +54,7 @@ BlurEffect.prototype.render = function(outputTarget,count){
     }).render(this.quad);
   }
 
-  if(count){
+  for(var n=0;n<count;n++){
     for(var i=0;i<3;i++){
       this.messageShader.use({
         rect:    [-1+1.5*Math.random(), -1+1.5*Math.random(), 0.5, 0.5],
@@ -61,21 +64,10 @@ BlurEffect.prototype.render = function(outputTarget,count){
     }
   }
   GL.framebuffer.setRenderTarget(outputTarget);
-  GL.blendFunc(GL.ONE,GL.ZERO);
+  GL.blendFunc(GL.ONE,GL.ONE);
   this.renderShader.use({
     texture: this.newTarget.texture,
   }).render(this.quad);
-
-  GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
-
-  for(var i=0;i<3;i++){
-    this.messageShader.use({
-      rect:    [0.1*Math.sin((0.0137-0.002*i)*this.a)+(i-1)/2-size/2, -0.5+0.1*Math.sin((0.0073+0.002*i)*this.a), size, size],
-      color: [1,1,1,0.1],
-      texture: this.textures[i]
-    }).render(this.quad);
-  }
-
 
   this.flipRenderTarget();
 }

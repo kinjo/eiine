@@ -1,0 +1,32 @@
+<meta charset='utf-8'>
+<script src='lib/text2img.js'></script>
+<script>
+IINE={};
+
+function setBG(){
+  var canvas=document.createElement("canvas");
+  canvas.width=canvas.height=64;
+  var g=canvas.getContext('2d')
+  g.fillStyle='#ddd'
+  g.fillRect(0,0,64,64);
+  g.fillStyle='#888'
+  g.fillRect(0,0,32,32);
+  g.fillRect(32,32,32,32);
+  document.body.style.background='url('+canvas.toDataURL()+')'
+}
+
+function addCharImage(text,size,font){
+  var img=new Image();
+  img.src=createCharImage(text,size,{lineWidth:1/4}).toDataURL();
+  document.body.appendChild(img);
+}
+onload=function(){
+  setBG();
+  addCharImage('い',512)
+  addCharImage('い',512)
+  addCharImage('ね',512)
+  addCharImage('は',512)
+  addCharImage('ご',512)
+  addCharImage('ー',512)
+}
+</script>

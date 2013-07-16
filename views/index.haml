@@ -1,15 +1,15 @@
 %html
   %head
     %meta{charset:"utf-8"}
-    %script{src:"/blur/glutil.js"}
-    %script{src:"/blur/shader.js"}
-    %script{src:"/blur/text2img.js"}
-    %script{src:"/blur/blur.js", charset:"utf-8"}
-    %script{src:"/blur/demo.js"}
+    %script{src:"/webgl/lib/glutil.js"}
+    %script{src:"/webgl/lib/shader.js"}
+    %script{src:"/webgl/lib/text2img.js"}
+    %script{src:"/webgl/effects/blur/blur.js", charset:"utf-8"}
+    %script{src:"/demo.js"}
     %script{src:"/jquery-1.10.2.min.js"}
     %script{type:"text/javascript"}
-      $(function () {$('#webglcanvas').attr('width', $('body').width()).attr('height', $('body').height()); start(BlurEffect)});
+      $(function () {start(BlurEffect, "/webgl/effects/blur/")});
   %body
     %input{type:"hidden", id:"hostname", value:@hostname}
     %input{type:"hidden", id:"session_id", value:@session_id}
-    %canvas{id:"webglcanvas", width:512, height:512}
+    %canvas{id:"webglcanvas", width:1024, height:512}
