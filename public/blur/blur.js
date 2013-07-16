@@ -1,15 +1,15 @@
 var BlurEffect = function(){
   this.size = 512;
-  this.calcShader    = new ShaderObject({vert: 'vertex.vert', frag: 'calc.frag'});
-  this.renderShader  = new ShaderObject({vert: 'vertex.vert', frag: 'render.frag'});
-  this.messageShader = new ShaderObject({vert: 'image.vert',  frag: 'image.frag'});
+  this.calcShader    = new ShaderObject({vert: '/blur/vertex.vert', frag: '/blur/calc.frag'});
+  this.renderShader  = new ShaderObject({vert: '/blur/vertex.vert', frag: '/blur/render.frag'});
+  this.messageShader = new ShaderObject({vert: '/blur/image.vert',  frag: '/blur/image.frag'});
   this.textures = [
     new TextureObject({image: createCharImage('は', 128), clamp: true, mipmap: true}),
     new TextureObject({image: createCharImage('ご', 128), clamp: true, mipmap: true}),
     new TextureObject({image: createCharImage('ー', 128), clamp: true, mipmap: true})
   ];
   var img=new Image();
-  img.src="wave.png";
+  img.src="/blur/wave.png";
   this.waveTexture = new TextureObject({image: img});
 
   this.oldTarget = this.createRenderTarget();
