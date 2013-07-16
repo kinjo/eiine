@@ -1,10 +1,12 @@
 var GL,FB;
-function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
+function start(){
   var iine=0;
   var flag=false;
   var pre_update='';
   var iinen=0; // number of iine
   var ws = new WebSocket('ws://' + $('#hostname').val());
+  //document.body.onclick=function(){flag=true;}
+  //document.body.onkeydown=function(){flag=true;}
   ws.onmessage = function (e) {
     eval('var json=' + e.data);
     if(pre_update != json.update){
@@ -15,7 +17,7 @@ function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
       iine=0;
     }
     if(json.aftereffect){
-      aftereffect.render(renderTarget,1);
+      //aftereffect.render(renderTarget,1);
       console.log('aftereffect received');
     }
   };
@@ -27,14 +29,14 @@ function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
       success:function(){
         ws.send('message');
         iine++;
-        GL.clear(GL.COLOR_BUFFER_BIT);
-        effect.render(renderTarget,1);
+        flag=true;
+        //GL.clear(GL.COLOR_BUFFER_BIT);
+        //effect.render(renderTarget,1);
       },
       error:function(){
       }
     });
   }
-  //document.body.onkeydown=function(){flag=true;}
   var canvas=document.getElementById("webglcanvas");
   canvas.style.position='absolute';
   canvas.style.left=canvas.style.top=0;
@@ -52,21 +54,26 @@ function start(effectClass,baseURL,aftereffectClass,aftereffectBaseURL){
   GL.clear(GL.COLOR_BUFFER_BIT);
   GL.disable(GL.DEPTH_TEST);
   GL.enable(GL.BLEND);
-  var effect = new effectClass(baseURL);
-  var aftereffect = new aftereffectClass(aftereffectBaseURL);
-  effect.render(renderTarget,1);
+  var effect1 = new LifeGame('/webgl/effects/lifegame/');
+  var effect2 = new BlurEffect('/webgl/effects/blur/');
+  var effect3 = new SquareEffect('/webgl/aftereffect/square/');
+  var effect4 = new SugokuEffect('/webgl/aftereffect/sugokuiine/');
+  effect1.render(renderTarget,1);
+  effect2.render(renderTarget,1);
   var t=new Date();
   setInterval(function(){
     GL.clear(GL.COLOR_BUFFER_BIT);
+    GL.blendFunc(GL.ONE,GL.ZERO);
     if(flag&&(new Date()-1000/10>t)){
-      // reander the iine
-      effect.render(renderTarget,iinen);
-      iinen=0; // clear number of iine
+      effect1.render(renderTarget,1);
+      effect2.render(renderTarget,1);
       flag=false;
       t=new Date();
-    }else {
-      effect.render(renderTarget,0);
-      aftereffect.render(renderTarget,0);
+    }else{
+      effect1.render(renderTarget,0);
+      effect2.render(renderTarget,0);
     }
-  },10);
+    effect3.render(renderTarget);
+    effect4.render(renderTarget);
+  },10)
 }
