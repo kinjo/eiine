@@ -101,7 +101,7 @@ function eiine-show-instances-dns
 
 function eiine-mongo-dns
 {
-    for i in `instances mongo`; do eiine-show-instances-dns $i; done
+    for i in `eiine-show-instances mongo`; do eiine-show-instances-dns $i; done
 }
 
 function eiine-setup-config-yml
@@ -123,17 +123,18 @@ EOF
 function eiine-start-app
 {
     cat <<EOF | ssh -i $EC2_KEY -o StrictHostKeyChecking=no ubuntu@$1 'bash -l'
-cd ~/eiine/bin && ./collector restart
-cd ~/eiine/bin && ./counter restart
-cd ~/eiine && bundle exec thin stop -d
-cd ~/eiine && bundle exec thin start -d
+cd ~/eiine
+git pull
+bundle install
+(cd ./bin && ./collector restart)
+(cd ./bin && ./counter restart)
+bundle exec thin stop -d
+bundle exec thin start -d
 EOF
 }
 
 function eiine-start
 {
-    eiine-start-instances
-    eiine-wait-for-running
     for i in `eiine-show-instances app`; do
         dns=$(eiine-show-instances-dns $i)
         echo SETUP: $dns
@@ -142,7 +143,14 @@ function eiine-start
     done
 }
 
-function eiine-stop
+function eiine-start-all
+{
+    eiine-start-instances
+    eiine-wait-for-running
+    eiine-start
+}
+
+function eiine-stop-all
 {
     eiine-stop-instances
     eiine-wait-for-stopped
