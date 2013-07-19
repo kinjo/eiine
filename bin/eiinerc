@@ -148,10 +148,18 @@ function eiine-start-all
     eiine-start-instances
     eiine-wait-for-running
     eiine-start
+    eiine-start-elb
 }
 
 function eiine-stop-all
 {
     eiine-stop-instances
     eiine-wait-for-stopped
+}
+
+function eiine-start-elb
+{
+    elb-deregister-instances-from-lb eiine --instances $(elb-describe-instance-health eiine | awk '{print $2}')
+    elb-register-instances-with-lb eiine --instances $(eiine-instances app)
+    elb-describe-lbs eiine
 }
