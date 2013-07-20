@@ -85,7 +85,7 @@ post '/' do
     rescue
       banned = nil
     end
-    now=Time.now
+    now = Time.now
     if session and (!banned or now > banned)
       t = now.instance_eval {'%s.%03d' % [strftime('%Y/%m/%d+%H:%M:%S'), (usec / 1000.0).round]}
       # FIXME: There is missed in usec accuracy
