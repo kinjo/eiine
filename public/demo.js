@@ -38,7 +38,8 @@ function start(effectClass){
       }
     });
   };
-  $('body').click(iinef).keydown(iinef);
+  $('body').click(iinef);
+  //$('body').click(iinef).keydown(iinef);
 
   setInterval(function(){
     if(flag&&(new Date()-1000/10>t)){

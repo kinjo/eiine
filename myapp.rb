@@ -38,9 +38,6 @@ get '/' do
         begin
           count = cache.get('count', false)
           update = cache.get('update', false)
-          if count.to_i > 0
-            warn "count:#{count} update:#{update}"
-          end
         rescue Memcached::NotFound => e
           warn e
           count = 0
@@ -48,7 +45,7 @@ get '/' do
         rescue => e
           warn e
         end
-        warn "{count:#{count},update:\"#{update}\"}"
+        #warn "{count:#{count},update:\"#{update}\"}"
         if count.to_i > 0
           EM.next_tick { settings.sockets.each{|s| s.send("{count:#{count},update:\"#{update}\"}")} }
           begin
@@ -83,7 +80,14 @@ post '/' do
         cache.set "session_#{params[:session_id]}", session
       end
     end
-    if session and !session['banned']
+    begin
+      banned = Time.parse(session['banned'])
+    rescue
+      banned=nil
+    end
+    now=Time.now
+    if session and (!banned or now>banned)
+      warn "WARN4 #{now} #{banned}"
       t = Time.now.instance_eval {'%s.%03d' % [strftime('%Y/%m/%d+%H:%M:%S'), (usec / 1000.0).round]}
       # FIXME: There is missed in usec accuracy
       Memcached.new("#{settings.config.memcached_host}:#{settings.config.memcached_port}").set(t, {update:t, session_id:params[:session_id]})
