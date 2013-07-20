@@ -132,10 +132,6 @@ hostname: $dns
 c
 mongo_host: $(eiine-mongo-dns)
 .
-/banning
-c
-banning: true
-.
 w
 q
 EOF
