@@ -87,6 +87,8 @@ post '/' do
       t = Time.now.instance_eval {'%s.%03d' % [strftime('%Y/%m/%d+%H:%M:%S'), (usec / 1000.0).round]}
       # FIXME: There is missed in usec accuracy
       Memcached.new("#{settings.config.memcached_host}:#{settings.config.memcached_port}").set(t, {update:t, session_id:params[:session_id]})
+    else
+      warn "BANNED #{params[:session_id]}"
     end
   end
 end
