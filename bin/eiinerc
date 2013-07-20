@@ -61,7 +61,21 @@ function eiine-show-instances-status
     cat $EC2_DESCRIBE_INSTANCES_TMP | grep '^INSTANCE' | cut -f2,6
 }
 
-function eiine-wait-for
+function _eiine-wait-for-ssh
+{
+    while ! ssh -i ~/.aws-keys/first.pem -o StrictHostKeyChecking=no -o ConnectTimeout=3 $1 'hostname>/dev/null'; do ; done
+}
+
+function eiine-wait-for-ssh-all
+{
+    for i in `eiine-show-instances`; do
+        dns=$(eiine-show-instances-dns $i)
+        echo $dns
+        _eiine-wait-for-ssh ubuntu@$dns
+    done
+}
+
+function _eiine-wait-for
 {
     while [ "$(eiine-reload-instances-status && eiine-show-instances-status | grep -v $1 | wc -l)" != "0" ]; do
         echo waiting...
@@ -71,12 +85,12 @@ function eiine-wait-for
 
 function eiine-wait-for-running
 {
-    eiine-wait-for running
+    _eiine-wait-for running
 }
 
 function eiine-wait-for-stopped
 {
-    eiine-wait-for stopped
+    _eiine-wait-for stopped
 }
 
 function eiine-start-instances
@@ -106,6 +120,9 @@ function eiine-mongo-dns
 
 function eiine-setup-config-yml
 {
+    cat <<EOF | ssh -i $EC2_KEY -o StrictHostKeyChecking=no ubuntu@$1 'bash -l'
+cp ~/eiine/config/config.yml.example ~/eiine/config/config.yml
+EOF
     cat <<EOF | ssh -i $EC2_KEY -o StrictHostKeyChecking=no ubuntu@$1 'ed ~/eiine/config/config.yml'
 /hostname
 c
@@ -115,8 +132,21 @@ hostname: $dns
 c
 mongo_host: $(eiine-mongo-dns)
 .
+/banning
+c
+banning: true
+.
 w
 q
+EOF
+}
+
+function eiine-update-app
+{
+    cat <<EOF | ssh -i $EC2_KEY -o StrictHostKeyChecking=no ubuntu@$1 'bash -l'
+cd ~/eiine
+git pull
+bundle install
 EOF
 }
 
@@ -124,8 +154,6 @@ function eiine-start-app
 {
     cat <<EOF | ssh -i $EC2_KEY -o StrictHostKeyChecking=no ubuntu@$1 'bash -l'
 cd ~/eiine
-git pull
-bundle install
 (cd ./bin && ./collector restart)
 (cd ./bin && ./counter restart)
 bundle exec thin stop -d
@@ -133,21 +161,37 @@ bundle exec thin start -d
 EOF
 }
 
-function eiine-start
+function eiine-start-apps
 {
+    eiine-reload-instances-status
     for i in `eiine-show-instances app`; do
         dns=$(eiine-show-instances-dns $i)
         echo SETUP: $dns
+        eiine-update-app $dns
         eiine-setup-config-yml $dns
         eiine-start-app $dns
     done
+    eiine-start-elb
 }
 
 function eiine-start-all
 {
     eiine-start-instances
     eiine-wait-for-running
-    eiine-start
+    eiine-wait-for-ssh-all
+    eiine-start-apps
+    eiine-start-elb
+}
+
+function eiine-restart-apps
+{
+    eiine-reload-instances-status
+    for i in `eiine-show-instances app`; do
+        dns=$(eiine-show-instances-dns $i)
+        echo SETUP: $dns
+        eiine-setup-config-yml $dns
+        eiine-start-app $dns
+    done
     eiine-start-elb
 }
 
