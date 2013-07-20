@@ -80,7 +80,7 @@ post '/' do
       if session
         session.inject({}){|memo,(k,v)| memo[k.to_sym]=v; memo} # symbolify keys
         cache = Memcached.new("#{settings.config.memcached_host}:#{settings.config.memcached_port}")
-        cache.set "session_#{session_id}", session
+        cache.set "session_#{params[:session_id]}", session
       end
     end
     if session and !session[:banned]
