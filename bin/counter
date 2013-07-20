@@ -40,17 +40,17 @@ Daemons.run_proc(File.basename(__FILE__)) do
   
     latest = latests.dup.sort({cache_key:-1}).limit(1).to_a.first
 
-    q=(Time.now-5).strftime('%Y/%m/%d+%H:%M:%S')
-    collection.find({cache_key:{"$gt"=>q}}).inject({}) { |h, e|
+    q = (Time.now - 5).strftime('%Y/%m/%d+%H:%M:%S')
+    collection.find({cache_key:{"$gt" => q}}).inject({}) { |h, e|
       # Count iine per session_id
       h[e['session_id']] = (h[e['session_id']] || 0) + 1
       h
     }.each do |k, v|
       puts "#{k} #{v}"
       if v > (config.ban_threshold||40)
-        # If the number of iine is over ban_threshold at last 5s, ban the session
+        # If the number of iine is over ban_threshold last 5s, ban the session
         session = coll.find({session_id:k}).first
-        session['banned']=(Time.now+(config.expire_ban||5)).to_s
+        session['banned'] = (Time.now + (config.expire_ban || 5)).to_s
         coll.update({_id:session['_id']}, session)
         puts "banned #{k}"
         begin

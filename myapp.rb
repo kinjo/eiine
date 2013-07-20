@@ -83,12 +83,11 @@ post '/' do
     begin
       banned = Time.parse(session['banned'])
     rescue
-      banned=nil
+      banned = nil
     end
     now=Time.now
-    if session and (!banned or now>banned)
-      warn "WARN4 #{now} #{banned}"
-      t = Time.now.instance_eval {'%s.%03d' % [strftime('%Y/%m/%d+%H:%M:%S'), (usec / 1000.0).round]}
+    if session and (!banned or now > banned)
+      t = now.instance_eval {'%s.%03d' % [strftime('%Y/%m/%d+%H:%M:%S'), (usec / 1000.0).round]}
       # FIXME: There is missed in usec accuracy
       Memcached.new("#{settings.config.memcached_host}:#{settings.config.memcached_port}").set(t, {update:t, session_id:params[:session_id]})
     else
