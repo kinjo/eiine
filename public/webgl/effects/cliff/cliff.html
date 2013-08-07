@@ -1,0 +1,14 @@
+<meta charset='utf-8'>
+<script src="../../lib/glutil.js"></script>
+<script src="../../lib/shader.js"></script>
+<script src="../../lib/text2img.js"></script>
+<script src="cliff.js" charset="utf-8"></script>
+<script src="../../lib/demo.js"></script>
+<script>onload=function(){
+  start(CliffEffect,'./')
+  window.onmousewheel=function(e){
+    if(CliffEffect.y==undefined)CliffEffect.y=0;
+    CliffEffect.y-=0.0002*e.wheelDelta;
+  }
+}</script>
+<canvas id=webglcanvas width=1024 height=512></canvas>

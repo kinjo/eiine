@@ -1,9 +1,22 @@
 //size width, height, color, format, wrap_s, wrap_t, wrap, filter, image, mipmap
 function TextureObject(options){
   this.texture = GL.createTexture();
-  if(options.image && options.image.complete==false){
+  if(typeof options.image == 'string'){
+    var src = options.image;
+    options.image = new Image();
+    options.image.src = src;
+  }
+  if(options.image){
     var self=this;
-    options.image.onload=function(){self.load(options);}
+    if(options.image.complete==false){
+      options.image.onload=function(){
+        self.load(options);
+        if(self.onload)self.onload();
+      }
+    }else{
+      this.load(options);
+      if(self.onload)self.onload();
+    }
   }else{
     this.load(options);
   }

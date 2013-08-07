@@ -4,60 +4,116 @@
 <script src="lib/text2img.js"></script>
 <script src="effects/blur/blur.js" charset="utf-8"></script>
 <script src="effects/lifegame/lifegame.js" charset="utf-8"></script>
+<script src="effects/cliff/cliff.js" charset="utf-8"></script>
 <script src="aftereffect/square/square.js" charset="utf-8"></script>
 <script src="aftereffect/sugokuiine/sugoku.js" charset="utf-8"></script>
+<script src="aftereffect/aria/aria.js" charset="utf-8"></script>
 <script>
-
-
-var GL,FB;
-onload=function(){
+var GL, FB, TARGET;
+var cliff, lifegame, blur;
+var effectList = [];
+var COUNT=0;
+function initGL(){
   var flag=false;
-  document.body.onclick=function(){flag=true;}
-  document.body.onkeydown=function(){flag=true;}
   var canvas=document.getElementById("webglcanvas");
   canvas.style.position='absolute';
   canvas.style.left=canvas.style.top=0;
   GL=canvas.getContext("experimental-webgl");
-  GL.framebuffer=new FrameBufferObject();
+  FB=GL.framebuffer=new FrameBufferObject();
   var renderTarget;
   window.onresize=function(){
     canvas.width=innerWidth;
     canvas.height=innerHeight;
-    renderTarget = new RenderTarget({width: canvas.width, height: canvas.width,x:0,y:-(canvas.width-canvas.height)/2});
-    GL.framebuffer.setRenderTarget(renderTarget);
+    TARGET = new RenderTarget({width: canvas.width, height: canvas.width,x:0,y:-(canvas.width-canvas.height)/2});
+    GL.framebuffer.setRenderTarget(TARGET);
+    render();
   }
-  window.onresize();
   GL.clearColor(0,0,0,1)
   GL.clear(GL.COLOR_BUFFER_BIT);
   GL.disable(GL.DEPTH_TEST);
   GL.enable(GL.BLEND);
-  var effect1 = new LifeGame('effects/lifegame/');
-  var effect2 = new BlurEffect('effects/blur/');
-  var effect3 = new SquareEffect('aftereffect/square/');
-  var effect4 = new SugokuEffect('aftereffect/sugokuiine/');
-  effect1.render(renderTarget,1);
-  effect2.render(renderTarget,1);
-  var t=new Date();
-  setInterval(function(){
-    GL.clear(GL.COLOR_BUFFER_BIT);
-    GL.blendFunc(GL.ONE,GL.ZERO);
-    if(flag&&(new Date()-1000/10>t)){
-      effect1.render(renderTarget,1);
-      effect2.render(renderTarget,1);
-      flag=false;
-      t=new Date();
-    }else{
-      effect1.render(renderTarget,0);
-      effect2.render(renderTarget,0);
-    }
-    effect3.render(renderTarget);
-    effect4.render(renderTarget);
-  },10)
+  cliff = new CliffEffect('effects/cliff/');
+  blur = new BlurEffect('effects/blur/');
+  lifegame = new LifeGame('effects/lifegame/');
+  window.onresize();
+  function timing(){
+    var time1=new Date();
+    render();
+    var time2=new Date();
+    var sleep = 16-(time2-time1);
+    if(sleep<5)sleep=5
+    setTimeout(timing,sleep);
+  }
+  timing();
 }
 
 
 
+function renderBackground(){
+  cliff.render(TARGET);
+  lifegame.render(TARGET, COUNT);
+  blur.render(TARGET, COUNT);
+  COUNT = 0;
+}
 
 
+function render(){
+  GL.clear(GL.COLOR_BUFFER_BIT);
+  GL.blendFunc(GL.ONE,GL.ZERO);
+  renderBackground();
+  var list=[];
+  for(var i=0;i<effectList.length;i++){
+    var effect = effectList[i];
+    if(effect.render(TARGET)){
+      list.push(effect);
+    }
+  }
+  effectList = list;
+}
+
+function addEffect(n){COUNT+=(n||1);}
+
+function addBigEffect(effect){
+  effectList.push(effect);
+}
+
+
+function DelayEffect(effect, delay){
+  this.time0=new Date();
+  this.delay=delay;
+  this.effect=effect;
+  effect.time0=this.time0.getTime()+delay;
+}
+DelayEffect.prototype.render=function(target){
+  var msec=(new Date()-this.time0);
+  if(msec<this.delay)return true;
+  return this.effect.render(target);
+}
+
+
+function genBigEffect(){
+  var constructors = [AriaEffect, SugokuEffect];
+  var constructor = constructors[Math.floor(constructors.length*Math.random())];
+  return new constructor();
+}
+var bigSound;
+onload=function(){
+  initGL();
+  AriaEffect.load('aftereffect/aria/');
+  SugokuEffect.load('aftereffect/sugokuiine/');
+  SquareEffect.load('aftereffect/square/');
+  bigSound=document.createElement("video");//new Audio();
+  bigSound.src="sounds/iyopon.mp3";
+
+  document.onclick=function(e){
+    if(e.pageX<innerWidth/2){
+      addEffect(1+Math.floor(2*Math.random()));
+    }else{
+      addBigEffect(new DelayEffect(new SquareEffect(7000),300));
+      addBigEffect(new DelayEffect(genBigEffect(),3100));
+      bigSound.play();
+    }
+  }
+}
 </script>
 <canvas id=webglcanvas width=1024 height=512></canvas>
