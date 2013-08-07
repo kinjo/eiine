@@ -8,4 +8,4 @@ mongo_db: fluent
 mongo_collection: myapp
 ban_threshold: 40
 expire_ban: 10
-effect_threshold: 10
+effect_threshold: 250

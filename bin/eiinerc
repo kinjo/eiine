@@ -136,7 +136,7 @@ mongo_host: $(eiine-mongo-dns)
 .
 /effect_threshold
 c
-effect_threshold: 300
+effect_threshold: 250
 .
 w
 q
