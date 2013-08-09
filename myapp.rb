@@ -14,6 +14,22 @@ set :sockets, []
 set :config, OpenStruct.new(YAML.load_file(CONFIG_FILEPATH))
 set :acc, 0 # count iine until threshold reached
 
+get '/button' do
+  @hostname = settings.config.hostname
+
+  @session_id = UUIDTools::UUID.random_create.to_s
+  connect = Mongo::Connection.new settings.config.mongo_host, settings.config.mongo_port
+  db = connect.db settings.config.mongo_db
+  collection = db.collection 'session_id'
+  session = {session_id:@session_id, banned:false, update:Time.now.to_s, counter:0}
+  collection.insert(session)
+
+  cache = Memcached.new("#{settings.config.memcached_host}:#{settings.config.memcached_port}")
+  cache.set "session_#{@session_id}", session
+
+  haml :button
+end
+
 get '/' do
   if !request.websocket?
     @hostname = settings.config.hostname

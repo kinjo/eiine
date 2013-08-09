@@ -1,56 +1,19 @@
 <meta charset='utf-8'>
 <title>xhago button</title>
+<link href="button.css" rel="stylesheet" type="text/css" />
 <script src="../lib/glutil.js"></script>
 <script src="../lib/shader.js"></script>
 <script src="button.js" charset="utf-8"></script>
 <script>
 onload=function(){
-  start();
+  start("./");
   //connect to socketio
 }
 function onButtonClick(){
   console.log('clicked');
   //send event
 }
-
 </script>
-<style>
-body{background:black;}
-body.webgl #webgl,#nongl{display:block;}
-body.webgl #nongl,#webgl{display:none;}
-div.button{
-  background-image: url(button.png);
-  margin-left:auto;
-  margin-right:auto;
-  margin-top:20vw;
-  width:50vw;
-  height:20vw;
-  border-radius:9%/21%;
-  background-size: 102.4%;
-  background-position:50% 50%;
-  overflow:hidden;
-  cursor:pointer;
-}
-div.button div{
-  position:absolute;
-  width:50vw;
-  height:20vw;
-  border-radius:9%/21%;
-}
-div.button div:hover{
-  background:blue;
-  opacity:0.1;
-}
-div.button div:active{
-  opacity:0.5;
-  background:black;
-}
-canvas{
-  background:red;
-  position:fixed;
-  left:0;top:0;
-}
-</style>
 <div id='nongl'>
   <div class="button" onclick="if(window.onButtonClick)onButtonClick();"><div></div></div>
 </div>
