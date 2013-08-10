@@ -1,6 +1,6 @@
 var GL,FB;
 var mouseX=0,mouseY=0;
-function start(){
+function start(url){
   var flag=false;
   var canvas=document.getElementById("webglcanvas");
   var state=false;
@@ -49,7 +49,7 @@ function start(){
     GL.framebuffer.setRenderTarget(renderTarget);
     renderWithArg();
   }
-  load();
+  load(url);
   window.onresize();
   GL.clearColor(0,0,0,1)
 }
@@ -106,12 +106,12 @@ function renderWithArg(){
 }
 
 var texture,text,shader,quad,wave,lgeom;
-function load(){
-  texture=new TextureObject({image:'glbutton.png',mipmap:true});
-  text=new TextureObject({image:'button.png',mipmap:true});
-  shader=new ShaderObject({vert:'button.vert',frag:'button.frag'});
-  light=new ShaderObject({vert:'light.vert',frag:'light.frag'});
-  wave=new TextureObject({image:'../effects/blur/wave.jpg'})
+function load(url){
+  texture=new TextureObject({image:url+'glbutton.png',mipmap:true});
+  text=new TextureObject({image:url+'button.png',mipmap:true});
+  shader=new ShaderObject({vert:url+'button.vert',frag:url+'button.frag'});
+  light=new ShaderObject({vert:url+'light.vert',frag:url+'light.frag'});
+  wave=new TextureObject({image:url+'../effects/blur/wave.jpg'})
   var quadVertex=new ArrayBufferObject(2, [-1, -1, 1, -1, 1, 1, -1, 1]);
   quad=new Geometry(GL.TRIANGLE_FAN,4,{vertex:quadVertex});
   var larr=[];
